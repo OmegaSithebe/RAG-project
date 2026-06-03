@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -10,11 +11,9 @@ from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
+# Lazily initialized clients to avoid failing at import time when env vars are missing
 MODEL = "gpt-4.1-nano"
 DB_NAME = str(Path(__file__).parent.parent / "vector_db")
-
-# embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
 RETRIEVAL_K = 5
 
 SYSTEM_PROMPT = """
@@ -26,15 +25,19 @@ Context:
 {context}
 """
 
-vectorstore = Chroma(persist_directory=DB_NAME, embedding_function=embeddings)
-retriever = vectorstore.as_retriever()
-llm = ChatOpenAI(temperature=0, model_name=MODEL)
+# placeholders
+embeddings = None
+vectorstore = None
+retriever = None
+llm = None
 
 
 def fetch_context(question: str) -> list[Document]:
     """
     Retrieve relevant context documents for a question.
     """
+    if retriever is None:
+        init_clients()
     return retriever.invoke(question, k=RETRIEVAL_K)
 
 
@@ -54,8 +57,27 @@ def answer_question(question: str, history: list[dict] = []) -> tuple[str, list[
     docs = fetch_context(combined)
     context = "\n\n".join(doc.page_content for doc in docs)
     system_prompt = SYSTEM_PROMPT.format(context=context)
+
+    if llm is None:
+        init_clients()
+
     messages = [SystemMessage(content=system_prompt)]
     messages.extend(convert_to_messages(history))
     messages.append(HumanMessage(content=question))
     response = llm.invoke(messages)
     return response.content, docs
+
+
+def init_clients() -> None:
+    """Initialize embeddings, vectorstore, retriever and llm. Raises a clear error if credentials are missing."""
+    global embeddings, vectorstore, retriever, llm
+
+    # Basic credential check for OpenAI
+    if not (os.getenv("OPENAI_API_KEY") or os.getenv("OPENAI API_KEY") or os.getenv("OPENAI_ADMIN_KEY")):
+        raise RuntimeError("OpenAI credentials not found. Set OPENAI_API_KEY in your environment or .env file.")
+
+    # initialize clients
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+    vectorstore = Chroma(persist_directory=DB_NAME, embedding_function=embeddings)
+    retriever = vectorstore.as_retriever()
+    llm = ChatOpenAI(temperature=0, model_name=MODEL)

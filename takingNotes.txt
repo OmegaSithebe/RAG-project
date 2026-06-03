@@ -1,0 +1,287 @@
+# **Module 4: Retrieval-Augmented Generation (RAG) Systems - (Weeks 16 - 30)**
+
+## 6. Introduction to Embeddings with the OpenAI API
+
+1. What are Embeddings?
+2. Embeddings for AI Applications
+3. Vector Database
+
+## 7. Vector Database for Embeddings with Pinecone
+
+1. Introduction to Pinecone
+2. Pinecone Vector Manipulation In Python
+3. Performance Turning andAI Applications
+
+## 8. Developing LLM Application with LangChain
+
+1. Introduction to LangChain & Chatbot Mechanics
+2. Chains and Agents
+3. Retrieval Augmented Generation (RAG)
+
+**Project 1: Build a department-level knowledge bot using a vector database and LLM orchestration.**
+
+Welcome to RAG Project
+
+
+# RAG Project - Day 1 - Case Study
+
+# What is RAG?
+
+**RAG = Retrieval Augmented Generation**
+
+Think of RAG as giving an AI assistant an **open-book exam** instead of a **closed-book exam**.
+
+### Without RAG
+
+User asks:
+
+> "What insurance products does Insurellm offer for small businesses?"
+> 
+
+The LLM answers based on its training data.
+
+Problems:
+
+- It may not know Insurellm.
+- Information may be outdated.
+- It may hallucinate (make things up).
+
+---
+
+### With RAG
+
+User asks:
+
+> "What insurance products does Insurellm offer for small businesses?"
+> 
+
+The system:
+
+1. Searches company documents.
+2. Finds relevant information.
+3. Sends that information to the LLM.
+4. LLM answers using the retrieved documents.
+
+Result:
+
+- More accurate
+- Company-specific answers
+- Less hallucination
+- Low cost
+
+---
+
+# Real World Analogy
+
+Imagine a new employee joins an insurance company.
+
+You ask:
+
+> "What is our cyber insurance coverage limit?"
+> 
+
+The employee has two choices:
+
+### Option 1: Guess
+
+They try to remember.
+
+Result:
+
+❌ Wrong answer possible
+
+---
+
+### Option 2: Check company documents
+
+They search:
+
+- Product manuals
+- Policy documents
+- Internal wiki
+
+Then answer.
+
+Result:
+
+✅ Accurate answer
+
+This is exactly what RAG does.
+
+
+# What Problem Are We Solving?
+
+We work for:
+
+**Insurellm – An Insurance Technology Company**
+
+Employees ask questions every day:
+
+- What products do we sell?
+- What are policy limits?
+- What is the claim process?
+- What are company regulations?
+- What are customer eligibility requirements?
+
+Hundreds of documents contain the answers.
+
+Instead of employees manually searching documents:
+
+👉 We build an AI Assistant.
+
+---
+
+# Project Goal
+
+Build:
+
+### Expert Knowledge Worker AI Assistant
+
+The assistant should:
+
+- Understand insurance-related questions
+- Search company knowledge
+- Find relevant information
+- Give accurate answers
+
+Example:
+
+---
+
+Employee asks:
+
+> What is the waiting period for our health insurance plan?
+> 
+
+RAG searches:
+
+```
+health_policy
+employee_manual
+insurance_products
+```
+
+Finds:
+
+```
+Waiting period = 90 days
+```
+
+LLM responds:
+
+> According to the Health Insurance Product Guide, the waiting period is 90 days.
+> 
+
+# High Level Architecture
+
+```
+                  User Question
+                         |
+                         V
+               "What is our cyber policy?"
+                         |
+                         V
+                Retrieval System
+                         |
+          Search company documents
+                         |
+                         V
+               Relevant Documents
+                         |
+                         V
+                    LLM Prompt
+                         |
+       Question + Retrieved Documents
+                         |
+                         V
+                    AI Answer
+```
+
+# Why This Project Matters
+
+This is one of the most common AI projects companies build today.
+
+Examples:
+
+### Customer Support Bot
+
+Search support documents.
+
+---
+
+### HR Assistant
+
+Search employee handbook.
+
+---
+
+### Legal Assistant
+
+Search contracts.
+
+---
+
+### Medical Assistant
+
+Search medical guidelines.
+
+---
+
+### University Assistant
+
+Search course materials.
+
+---
+
+### Insurance Assistant
+
+Search insurance policies.
+
+---
+
+# What Students Will Learn During RAG Week
+
+### Phase 1: Basic RAG
+
+- Load documents
+- Split documents into chunks
+- Create embeddings
+- Search relevant chunks
+- Generate answers
+
+---
+
+### Phase 2: Production RAG
+
+- Vector databases
+- ChromaDB
+- Pinecone
+- Qdrant
+- PostgreSQL + pgvector
+
+---
+
+### Phase 3: Advanced Retrieval
+
+- Hybrid Search
+- Reranking
+- Metadata Filtering
+- Query Expansion
+
+---
+
+### Phase 4: Production Deployment
+
+- API Development
+- Docker
+- Cloud Hosting
+- Monitoring
+- Logging
+- Cost Optimization
+
+---
+
+# One-Line Definition for Students
+
+> **RAG (Retrieval Augmented Generation) is a technique where an AI first searches relevant company documents and then uses that information to generate accurate answers instead of relying only on its training knowledge.**
+>

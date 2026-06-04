@@ -285,3 +285,6 @@ Search insurance policies.
 
 > **RAG (Retrieval Augmented Generation) is a technique where an AI first searches relevant company documents and then uses that information to generate accurate answers instead of relying only on its training knowledge.**
 >
+
+NB**
+glob.glob = means it will find the file name, it will read the file name. It will find all the file name from your folder. (filenames = glob.glob("knowledge/*.txt"))

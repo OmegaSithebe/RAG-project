@@ -288,3 +288,263 @@ Search insurance policies.
 
 NB**
 glob.glob = means it will find the file name, it will read the file name. It will find all the file name from your folder. (filenames = glob.glob("knowledge/*.txt"))
+
+
+
+RAG - Day 2
+### Expert Knowledge Worker
+
+We are building an AI Question-Answer Assistant for employees of **Insurellm**.
+
+**Goal:**
+
+- Answer employee questions accurately.
+- Keep the solution fast and low-cost.
+- Use company documents as the source of truth.
+
+To improve accuracy, we will use **RAG (Retrieval-Augmented Generation)**.
+
+
+### What is RAG?
+
+RAG allows the AI to:
+
+1. Search company documents for relevant information.
+2. Retrieve the most useful content.
+3. Use that content to generate accurate answers.
+
+Instead of relying only on the model's memory, the AI can look up information from our knowledge base.
+
+
+## Today's Tasks
+
+### Part A: Create Chunks
+
+- Split large documents into smaller pieces called **chunks**.
+- Smaller chunks make searching faster and more accurate.
+
+---
+
+### Part B: Create Vectors and Store in Chroma
+
+- Convert each chunk into a numerical representation called a **vector (embedding)**.
+- Store these vectors in **Chroma**, a vector database.
+
+**Why?**
+
+- When a user asks a question, we convert the question into a vector.
+- Chroma finds the most similar chunks.
+- Those chunks are sent to the LLM to generate an accurate answer.
+
+
+RAG Pipeline
+Documents
+    ↓
+Split into Chunks
+    ↓
+Create Embeddings (Vectors)
+    ↓
+Store in Chroma
+    ↓
+User Question
+    ↓
+Convert Question to Vector
+    ↓
+Find Similar Chunks
+    ↓
+Send Context to LLM
+    ↓
+Generate Accurate Answer
+
+Outcome: We will build an AI assistant that can answer employee questions using company documents with high accuracy and low cost.
+
+
+Dependencies:
+# First, fix the typos:
+uv add python-dotenv
+uv add tiktoken
+uv add langchain-openai
+uv add langchain-chroma
+uv add langchain-huggingface
+uv add langchain-community
+uv add langchain-text-splitters  
+uv add sentence-transformers     
+
+# For document loading and processing
+uv add langchain pypdf unstructured chromadb
+
+# For better sentence-transformers support
+uv add torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+
+# For embeddings and tokenization
+uv add huggingface-hub transformers
+
+# Already installed but double-check:
+uv add gradio openai
+
+Core Environment & Utilities
+Package	Purpose	How It Works
+python-dotenv	Loads environment variables from .env file	Reads key=value pairs from a .env file and adds them to your system environment variables, keeping API keys secure
+tiktoken	Token counter for OpenAI models	OpenAI's fast tokenizer - counts how many tokens text will use before sending to GPT (important for managing costs and limits)
+numpy	Numerical operations	Handles arrays and mathematical operations for embeddings and vector calculations
+Vector Database & Embeddings
+Package	Purpose	How It Works
+langchain-chroma	Vector database for storing embeddings	ChromaDB is a lightweight vector database that stores text embeddings and performs similarity searches to find relevant documents
+langchain-openai	OpenAI integration	Provides OpenAIEmbeddings class that converts text into vectors using OpenAI's embedding models (text-embedding-3-small/large)
+langchain-huggingface	Hugging Face models integration	Provides HuggingFaceEmbeddings class that uses free, open-source embedding models from Hugging Face (runs locally on your computer)
+sentence-transformers	Local embedding models	Framework for state-of-the-art sentence/paragraph embeddings (models like 'all-MiniLM-L6-v2') - runs completely offline
+Document Processing
+Package	Purpose	How It Works
+langchain-community	Community document loaders	Contains DirectoryLoader, TextLoader, PyPDFLoader - reads different file types (TXT, PDF, DOCX, etc.) and converts them to LangChain document format
+langchain-text-splitters	Document chunking	Contains RecursiveCharacterTextSplitter - breaks large documents into smaller chunks while preserving context (e.g., splitting by paragraphs, sentences, or character count)
+Web Interface
+Package	Purpose	How It Works
+gradio	Creates web UI for ML models	Builds an interactive chat interface where users can ask questions and get responses from your RAG chatbot - runs locally with a simple Python API
+LLM Integration
+Package	Purpose	How It Works
+openai	OpenAI API client	Direct client for calling GPT models (GPT-4, GPT-3.5) to generate answers based on retrieved context
+How They Work Together in Your RAG Pipeline:
+text
+1. Document Loading (langchain-community)
+   ↓
+   Load files from your directory
+   
+2. Text Splitting (langchain-text-splitters)  
+   ↓
+   Break documents into smaller chunks (500-1000 characters)
+   
+3. Embedding Creation (langchain-openai OR langchain-huggingface OR sentence-transformers)
+   ↓
+   Convert each chunk into a vector (array of numbers)
+   
+4. Vector Storage (langchain-chroma)
+   ↓
+   Store vectors in ChromaDB with their original text
+   
+5. User Question (gradio)
+   ↓
+   User types question in web interface
+   
+6. Query Embedding
+   ↓
+   Convert question to vector using same embedding method
+   
+7. Similarity Search (langchain-chroma)
+   ↓
+   Find most similar document chunks to the question
+   
+8. Answer Generation (openai)
+   ↓
+   Send question + relevant chunks to GPT for final answer
+   
+9. Display Response (gradio)
+   ↓
+   Show answer to user in web interface
+Which Embedding Method to Choose?
+Method	Pros	Cons
+OpenAI Embeddings	Best quality, easy to use	Costs money, requires API key
+HuggingFace Embeddings	Free, good quality	Slower, requires internet for some models
+Sentence-Transformers	Free, runs offline, fast	Smaller models = lower quality
+
+
+Resolving the issue of yellow line on the packages/dependencies, interpretor not recognising packages
+## 🎯 What Was Happening - The Problem
+
+**The Issue:** Your Jupyter notebook and terminal were looking at different Python environments.
+
+- **Terminal** had your virtual environment (`.venv`) activated with all packages installed ✅
+- **Jupyter notebook** was using a different Python (likely global/system Python) that didn't have the packages ❌
+
+Think of it like having two separate kitchens. Your terminal kitchen had all the ingredients (packages), but your notebook was cooking in a different kitchen with empty cabinets.
+
+**Why the yellow lines?** VSCode's linter was checking the Python environment the notebook was using, couldn't find the packages, so it underlined them in yellow.
+
+## 🔧 How We Resolved It
+
+We installed `ipykernel` and created a dedicated Jupyter kernel pointing to your virtual environment:
+
+```bash
+uv add ipykernel                    # Installs Jupyter kernel support
+python -m ipykernel install --user --name=rag-chatbot --display-name="Python (RAG Chatbot)"  # Creates kernel pointing to .venv
+```
+
+Then we switched the notebook to use this new kernel, which connected it to the correct Python environment with all packages.
+
+## 📦 Package Explanations
+
+### Core Utilities
+
+| Package | Purpose | How It Works |
+|---------|---------|---------------|
+| **os** | File system operations | Built into Python - lets you interact with your computer's file system (create folders, check if files exist) |
+| **glob** | File pattern matching | Finds files matching patterns like `*.txt` or `data/*.pdf` - essential for loading multiple documents |
+| **numpy** | Number crunching | Handles arrays and mathematical operations - embeddings (vectors) are stored as numpy arrays |
+| **python-dotenv** | API key security | Reads `.env` file with `OPENAI_API_KEY=your-key` and loads it into environment variables |
+| **tiktoken** | Token counting | OpenAI's tokenizer - counts tokens before sending to GPT (important for cost management) |
+
+### LangChain Ecosystem
+
+| Package | Purpose | How It Works |
+|---------|---------|---------------|
+| **langchain-openai** | OpenAI connection | Provides `OpenAIEmbeddings` (converts text to vectors) and ChatOpenAI (calls GPT models) |
+| **langchain-chroma** | Vector database | ChromaDB stores document vectors and performs similarity searches - finds relevant documents for a query |
+| **langchain-huggingface** | Free embeddings | Alternative to OpenAI - uses free open-source models from Hugging Face for text-to-vector conversion |
+| **langchain-community** | Document loaders | Contains `DirectoryLoader`, `TextLoader`, `PyPDFLoader` - reads files and converts them to LangChain document format |
+| **langchain-text-splitters** | Document chunking | `RecursiveCharacterTextSplitter` breaks long documents into smaller chunks while preserving context |
+| **sentence-transformers** | Local embeddings | Runs embedding models completely offline on your computer (e.g., 'all-MiniLM-L6-v2') |
+
+### Web & Development
+
+| Package | Purpose | How It Works |
+|---------|---------|---------------|
+| **gradio** | Web interface | Creates a chat UI with just a few lines of Python - runs locally on `http://localhost:7860` |
+| **openai** | GPT client | Direct API client for calling GPT-4/GPT-3.5 to generate final answers |
+| **ipykernel** | Jupyter connector | Bridges Jupyter notebooks to your virtual environment - allows notebooks to use packages installed in `.venv` |
+
+## 🔄 How They Work Together - Your RAG Pipeline
+
+```
+1. Load Documents (langchain-community)
+   ↓ Reads PDFs, TXT files from your folder
+   
+2. Split Text (langchain-text-splitters)  
+   ↓ Breaks into 500-1000 character chunks
+   
+3. Create Embeddings (OpenAI or HuggingFace or Sentence-Transformers)
+   ↓ Converts each chunk to a vector (array of numbers)
+   
+4. Store in Vector DB (langchain-chroma)
+   ↓ Saves vectors + original text for later searching
+   
+5. User Asks Question (gradio interface)
+   ↓ "What is RAG?"
+   
+6. Question → Vector (same embedding method)
+   ↓ Converts question to vector
+   
+7. Similarity Search (langchain-chroma)
+   ↓ Finds 3-5 most similar document chunks
+   
+8. GPT Answers (openai or langchain-openai)
+   ↓ Sends: "Context: [chunks] Question: [question] Answer:"
+   
+9. Display Answer (gradio)
+   ↓ Shows response to user in web interface
+```
+
+## 📝 Key Commands Learned
+
+```bash
+uv add package-name              # Installs package in your .venv
+uv add ipykernel                 # Installs Jupyter kernel support
+python -m ipykernel install --user --name=kernel-name  # Creates kernel for notebooks
+```
+
+## ✅ Your Working Environment Now
+
+- **Python location:** `.venv/Scripts/python.exe`
+- **Packages location:** `.venv/Lib/site-packages`
+- **Jupyter kernel:** "Python (RAG Chatbot)" pointing to your `.venv`
+- **Status:** All imports work, no yellow lines ✅
+
+You're ready to build your RAG chatbot! 🚀

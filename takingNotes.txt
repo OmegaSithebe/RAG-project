@@ -548,3 +548,168 @@ python -m ipykernel install --user --name=kernel-name  # Creates kernel for note
 - **Status:** All imports work, no yellow lines ✅
 
 You're ready to build your RAG chatbot! 🚀
+
+
+
+RAG Day - 2
+### Expert Knowledge Worker
+
+We are building an AI Question-Answer Assistant for employees of **Insurellm**.
+
+**Goal:**
+
+- Answer employee questions accurately.
+- Keep the solution fast and low-cost.
+- Use company documents as the source of truth.
+
+To improve accuracy, we will use **RAG (Retrieval-Augmented Generation)**.
+
+### What is RAG?
+
+RAG allows the AI to:
+
+1. Search company documents for relevant information.
+2. Retrieve the most useful content.
+3. Use that content to generate accurate answers.
+
+Instead of relying only on the model's memory, the AI can look up information from our knowledge base.
+
+---
+
+## Today's Tasks
+
+### Part A: Create Chunks
+
+- Split large documents into smaller pieces called **chunks**.
+- Smaller chunks make searching faster and more accurate.
+
+---
+
+### Part B: Create Vectors and Store in Chroma
+
+- Convert each chunk into a numerical representation called a **vector (embedding)**.
+- Store these vectors in **Chroma**, a vector database.
+
+**Why?**
+
+- When a user asks a question, we convert the question into a vector.
+- Chroma finds the most similar chunks.
+- Those chunks are sent to the LLM to generate an accurate answer.
+
+### RAG Pipeline
+
+```
+Documents
+    ↓
+Split into Chunks
+    ↓
+Create Embeddings (Vectors)
+    ↓
+Store in Chroma
+    ↓
+User Question
+    ↓
+Convert Question to Vector
+    ↓
+Find Similar Chunks
+    ↓
+Send Context to LLM
+    ↓
+Generate Accurate Answer
+```
+
+**Outcome:** We will build an AI assistant that can answer employee questions using company documents with high accuracy and low cost.
+
+
+# Pick an embedding model
+
+embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+#embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
+
+if os.path.exists(db_name):
+    Chroma(persist_directory=db_name, embedding_function=embeddings).delete_collection()
+
+vectorstore = Chroma.from_documents(documents=chunks, embedding=embeddings, persist_directory=db_name)  #This line of code is very important as it explains everything that is going on. (persist_directory=db_name) - create this directory name db_name or folder name and inside that folder create the vector database with this embedded document (embedding=embeddings) - embedding model. (Chroma.from_documents) - this function job is to handle all - (we have the chunks (documents=chunks), the embedding models. This chucnks will be passed to the embedding models, chain of words. Embedding is done and it is stored inside the db_name )
+
+print(f"Vectorstore created with {vectorstore._collection.count()} documents") 
+
+
+RAG Day 3 - 
+NB** - System prompts plays a huge role, rather changing the temperature work on improving system prompt and keep temperature to a zero.
+
+**RAG Day 3: Expert Question Answerer for InsureLLM**
+Build an expert Q&A system using **LangChain 1.0** and a **RAG (Retrieval-Augmented Generation) pipeline**.
+Use the **Vector Store** created previously with the **all-MiniLM-L6-v2** embedding model.
+
+
+### Set Up Two Important LangChain Objects
+
+1. **Retriever**
+    - Finds the most relevant information from your documents.
+    - Think of it as a smart search engine for your data.
+2. **LLM (Large Language Model)**
+    - Generates the final answer using the retrieved information.
+    - Examples: GPT-4, Claude, Gemini, etc.
+
+### Understanding Temperature
+
+**Temperature** controls how much randomness the AI uses when generating responses.
+
+- **Temperature = 0**
+    - Most predictable and consistent answers.
+    - Best for facts, coding, and question-answering systems.
+- **Higher Temperature (e.g., 0.7–1.0)**
+    - More varied and diverse responses.
+    - Useful for brainstorming, storytelling, and creative writing.
+
+### How Temperature Works
+
+Temperature does **not** directly control creativity.
+
+It controls how the model chooses the next word (token):
+
+- **temperature = 0**
+    - Always picks the most likely next word.
+- **temperature = 1**
+    - Words are chosen based on their probabilities.
+    - A word with a 10% probability will be selected about 10% of the time.
+
+### Important Notes
+
+- **Temperature = 0 does not guarantee identical outputs every time.**
+    - To make results more reproducible, you also need to set a **random seed**.
+    - Even then, outputs may not always be exactly the same.
+- If you want the AI to be more creative, **improve the System Prompt** rather than simply increasing the temperature.
+
+### Quick Rule
+✅ **Temperature 0 → Accurate & Consistent**
+✅ **Higher Temperature → More Variety**
+✅ **For Creativity → Use a Better System Prompt**
+
+
+RAG - Production Day 4
+implementation>
+
+### ingest.py
+
+- Read in Knowledge Base
+- Turn documents into chunks
+- Vectorize the chunks
+- Store in Chroma
+- uv run intest.py
+
+
+### answer.py
+
+- Two key functions
+- fetch_context(question)
+- **answer_question(question, history)**
+- Basically we give a question and some history, it will fetch relevant context and answer the question that is in answer.py
+- And the idea is that you could change this.
+- You could write your own ingestor to ingest the data and your own answer to accompany it, using consistent
+
+### Now the point is how we can put together.
+
+- Lets write **app.py**
+- app.py will call the gradio application.
+- uv run app.py

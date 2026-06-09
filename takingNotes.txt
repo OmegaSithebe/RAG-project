@@ -716,3 +716,15 @@ implementation>
 
 
 Evaluation
+1. Curate a  Test set - Example questions set with the right context identified and reference answer provided.
+2. We will do two type of test. 
+    - Measure Retrieval
+    - MRR (Mean Reciprocal Rank)
+    - nDCG (Normalized Discounted Cumulative Gain)
+    - Recall@k and Precision@k
+3. Measure Answers
+- eg use LLM-as-a-judge to score provided answsers against criteria like accuracy, completeness and relevance
+- MRR = Average inverse rank of first hot; 1 if the first chunk always has relevant context
+- nDCG = Did relevant chunks get ranked higher up
+- Recall@k = Proportion of tests where relevant context was in the top k chunks you have multiple keywords to look for, keyword coverage is similar recall metric
+- Precision@k = Proportion of the top k chunks that are relevant

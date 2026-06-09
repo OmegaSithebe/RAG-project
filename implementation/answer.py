@@ -3,7 +3,7 @@ import os
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_core.messages import SystemMessage, HumanMessage, convert_to_messages
+from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_core.documents import Document
 
 from dotenv import load_dotenv
@@ -38,21 +38,26 @@ def fetch_context(question: str) -> list[Document]:
     """
     if retriever is None:
         init_clients()
-    return retriever.invoke(question, k=RETRIEVAL_K)
+    return retriever.invoke(question)
 
 
-def combined_question(question: str, history: list[dict] = []) -> str:
+def combined_question(question: str, history: list[dict] = None) -> str:
     """
     Combine all the user's messages into a single string.
     """
+    if history is None:
+        history = []
     prior = "\n".join(m["content"] for m in history if m["role"] == "user")
     return prior + "\n" + question
 
 
-def answer_question(question: str, history: list[dict] = []) -> tuple[str, list[Document]]:
+def answer_question(question: str, history: list[dict] = None) -> tuple[str, list[Document]]:
     """
     Answer the given question with RAG; return the answer and the context documents.
     """
+    if history is None:
+        history = []
+    
     combined = combined_question(question, history)
     docs = fetch_context(combined)
     context = "\n\n".join(doc.page_content for doc in docs)
@@ -62,7 +67,14 @@ def answer_question(question: str, history: list[dict] = []) -> tuple[str, list[
         init_clients()
 
     messages = [SystemMessage(content=system_prompt)]
-    messages.extend(convert_to_messages(history))
+    
+    # Manually convert Gradio history format to LangChain messages
+    for msg in history:
+        if msg["role"] == "user":
+            messages.append(HumanMessage(content=msg["content"]))
+        elif msg["role"] == "assistant":
+            messages.append(AIMessage(content=msg["content"]))
+    
     messages.append(HumanMessage(content=question))
     response = llm.invoke(messages)
     return response.content, docs
@@ -79,5 +91,5 @@ def init_clients() -> None:
     # initialize clients
     embeddings = OpenAIEmbeddings(model="text-embedding-3-large")
     vectorstore = Chroma(persist_directory=DB_NAME, embedding_function=embeddings)
-    retriever = vectorstore.as_retriever()
+    retriever = vectorstore.as_retriever(search_kwargs={"k": RETRIEVAL_K})
     llm = ChatOpenAI(temperature=0, model_name=MODEL)

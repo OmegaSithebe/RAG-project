@@ -1,0 +1,21 @@
+Metadata-Version: 2.4
+Name: rag-chatbot
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.14
+Description-Content-Type: text/markdown
+Requires-Dist: dotenv>=0.9.9
+Requires-Dist: gradio>=6.15.2
+Requires-Dist: ipykernel>=7.2.0
+Requires-Dist: langchain-chroma>=1.1.0
+Requires-Dist: langchain-community>=0.4.2
+Requires-Dist: langchain-huggingface>=1.2.2
+Requires-Dist: langchain-openai>=1.2.2
+Requires-Dist: langchain-text-splitters>=1.1.2
+Requires-Dist: openai>=2.38.0
+Requires-Dist: pip>=26.1.2
+Requires-Dist: python-dotenv>=1.2.2
+Requires-Dist: sentence-transformers>=5.5.1
+Requires-Dist: tiktoken>=0.13.0
+
+# rag-chatbot"# RAG-project" 

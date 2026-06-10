@@ -2,16 +2,16 @@ import sys
 import math
 from pydantic import BaseModel, Field
 from litellm import completion
-from dotenv import load_dotenv
+from dotenv import load_dotenv #The `dotenv` module is used to load environment variables from a `.env` file. The `load_dotenv` function is called with `override=True`, which means that any existing environment variables will be overridden by the values in the `.env` file. This is often used to manage configuration settings, such as API keys or database credentials, without hardcoding them into the codebase.
 
 from evaluation.test import TestQuestion, load_tests
-from implementation.answer import answer_question, fetch_context
+from implementation.answer import answer_question, fetch_context #these functions are imported from the `answer` module in the `implementation` package. The `answer_question` function is likely responsible for generating an answer to a given question using the RAG system, while the `fetch_context` function is probably used to retrieve relevant documents or context based on the question. These functions will be used in the evaluation process to assess both the retrieval performance and the quality of the generated answers.
 
 
 load_dotenv(override=True)
 
 MODEL = "gpt-4.1-nano"
-db_name = "vector_db"
+db_name = "vector_db"   #the name of the vector database that will be used for retrieval. This variable is likely used in the `fetch_context` function to specify which vector database to query when retrieving relevant documents based on the test questions. The actual implementation of how this variable is used would depend on the details of the `fetch_context` function and how it interacts with the vector database.
 
 
 class RetrievalEval(BaseModel):
@@ -21,7 +21,7 @@ class RetrievalEval(BaseModel):
     ndcg: float = Field(description="Normalized Discounted Cumulative Gain (binary relevance)")
     keywords_found: int = Field(description="Number of keywords found in top-k results")
     total_keywords: int = Field(description="Total number of keywords to find")
-    keyword_coverage: float = Field(description="Percentage of keywords found")
+    keyword_coverage: float = Field(description="Percentage of keywords found")     #this class is used to represent the evaluation metrics for retrieval performance. It includes fields for Mean Reciprocal Rank (MRR), Normalized Discounted Cumulative Gain (nDCG), the number of keywords found in the top-k results, the total number of keywords that were supposed to be found, and the percentage of keywords that were successfully found in the retrieved context. These metrics will be calculated and used to assess how well the retrieval component of the RAG system is performing in terms of finding relevant information based on the test questions.
 
 
 class AnswerEval(BaseModel):
@@ -38,7 +38,7 @@ class AnswerEval(BaseModel):
     )
     relevance: float = Field(
         description="How relevant is the answer to the specific question asked? 1 (very poor - off-topic) to 5 (ideal - directly addresses question and gives no additional information). Only answer 5 if the answer is completely relevant to the question and gives no additional information."
-    )
+    )   #this class is used to represent the evaluation of answer quality using an LLM as a judge. It includes fields for feedback, which is a concise evaluation of the answer quality comparing it to the reference answer and the retrieved context, as well as numerical scores for accuracy, completeness, and relevance. The accuracy score assesses how factually correct the answer is compared to the reference answer, with a scale from 1 (wrong) to 5 (ideal). The completeness score evaluates how thoroughly the answer addresses all aspects of the question, also on a scale from 1 to 5. The relevance score measures how well the answer directly addresses the specific question without providing additional information, again on a scale from 1 to 5. These metrics will be used to assess the quality of the generated answers in comparison to the reference answers and the retrieved context.
 
 
 def calculate_mrr(keyword: str, retrieved_docs: list) -> float:
@@ -47,7 +47,7 @@ def calculate_mrr(keyword: str, retrieved_docs: list) -> float:
     for rank, doc in enumerate(retrieved_docs, start=1):
         if keyword_lower in doc.page_content.lower():
             return 1.0 / rank
-    return 0.0
+    return 0.0  #this function calculates the Mean Reciprocal Rank (MRR) for a single keyword based on the retrieved documents. It iterates through the list of retrieved documents, checking if the keyword (in a case-insensitive manner) is present in the content of each document. If the keyword is found, it returns the reciprocal of the rank (1 divided by the position of the document in the list). If the keyword is not found in any of the retrieved documents, it returns 0.0, indicating that the keyword was not successfully retrieved. This function will be used to evaluate how well the retrieval system is performing in terms of finding relevant information based on the test questions.
 
 
 def calculate_dcg(relevances: list[int], k: int) -> float:
@@ -55,7 +55,7 @@ def calculate_dcg(relevances: list[int], k: int) -> float:
     dcg = 0.0
     for i in range(min(k, len(relevances))):
         dcg += relevances[i] / math.log2(i + 2)  # i+2 because rank starts at 1
-    return dcg
+    return dcg  #this function calculates the Discounted Cumulative Gain (DCG) based on a list of relevance scores for the retrieved documents. The DCG is calculated by iterating through the relevance scores up to a specified rank `k` and applying a logarithmic discount to the relevance score based on its position in the list. The relevance score of each document is divided by the logarithm of its rank (starting from 1), which gives more weight to higher-ranked documents. The resulting DCG value is returned, which can be used in conjunction with the ideal DCG (IDCG) to calculate the Normalized Discounted Cumulative Gain (nDCG) for evaluating retrieval performance.
 
 
 def calculate_ndcg(keyword: str, retrieved_docs: list, k: int = 10) -> float:
@@ -74,7 +74,7 @@ def calculate_ndcg(keyword: str, retrieved_docs: list, k: int = 10) -> float:
     ideal_relevances = sorted(relevances, reverse=True)
     idcg = calculate_dcg(ideal_relevances, k)
 
-    return dcg / idcg if idcg > 0 else 0.0
+    return dcg / idcg if idcg > 0 else 0.0  #this function calculates the Normalized Discounted Cumulative Gain (nDCG) for a single keyword based on the retrieved documents. It first creates a list of binary relevance scores, where each score is 1 if the keyword is found in the document (case-insensitive) and 0 otherwise, for the top `k` retrieved documents. It then calculates the DCG using the `calculate_dcg` function. To calculate the ideal DCG (IDCG), it sorts the relevance scores in descending order (best case scenario where the keyword is found in the highest-ranked document) and calculates the IDCG using the same `calculate_dcg` function. Finally, it returns the nDCG value by dividing the DCG by the IDCG, ensuring that if IDCG is 0 (which would indicate that there are no relevant documents), it returns 0.0 to avoid division by zero. This function will be used to evaluate how well the retrieval system ranks relevant documents based on the presence of keywords in relation to their position in the retrieved list.
 
 
 def evaluate_retrieval(test: TestQuestion, k: int = 10) -> RetrievalEval:
@@ -110,7 +110,7 @@ def evaluate_retrieval(test: TestQuestion, k: int = 10) -> RetrievalEval:
         keywords_found=keywords_found,
         total_keywords=total_keywords,
         keyword_coverage=keyword_coverage,
-    )
+    )   #this function evaluates the retrieval performance for a given test question by calculating the Mean Reciprocal Rank (MRR), Normalized Discounted Cumulative Gain (nDCG), and keyword coverage metrics. It retrieves relevant documents using the `fetch_context` function, then calculates the MRR and nDCG for each keyword in the test question using the previously defined functions. The average MRR and nDCG scores are computed across all keywords. Additionally, it counts how many keywords were found in the retrieved documents to calculate the keyword coverage percentage. Finally, it returns a `RetrievalEval` object containing all these metrics, which can be used to assess the effectiveness of the retrieval component of the RAG system for that specific test question.
 
 
 def evaluate_answer(test: TestQuestion) -> tuple[AnswerEval, str, list]:
@@ -134,8 +134,8 @@ def evaluate_answer(test: TestQuestion) -> tuple[AnswerEval, str, list]:
         },
         {
             "role": "user",
-            "content": f"""Question:
-{test.question}
+            "content": f"""Question:    #This entire function evaluates the quality of the generated answer for a given test question using an LLM as a judge. It first generates an answer using the `answer_question` function, which also retrieves relevant documents. Then, it constructs a prompt for the LLM to evaluate the generated answer by comparing it to the reference answer provided in the test question. The prompt instructs the LLM to provide feedback and scores for accuracy, completeness, and relevance based on specific criteria. The response from the LLM is expected to be in a structured format that can be parsed into an `AnswerEval` object, which contains the evaluation results. The function returns a tuple containing the `AnswerEval` object, the generated answer string, and the list of retrieved documents for further analysis if needed.
+{test.question} 
 
 Generated Answer:
 {generated_answer}
@@ -167,7 +167,7 @@ def evaluate_all_retrieval():
     for index, test in enumerate(tests):
         result = evaluate_retrieval(test)
         progress = (index + 1) / total_tests
-        yield test, result, progress
+        yield test, result, progress    #this function evaluates the retrieval performance for all test questions by loading the tests and iterating through them. For each test, it calls the `evaluate_retrieval` function to get the evaluation results, and it calculates the progress as a percentage of tests completed. The function yields a tuple containing the test question, the retrieval evaluation result, and the progress, allowing for asynchronous processing or real-time updates in a user interface while the evaluations are being performed.
 
 
 def evaluate_all_answers():
@@ -177,7 +177,7 @@ def evaluate_all_answers():
     for index, test in enumerate(tests):
         result = evaluate_answer(test)[0]
         progress = (index + 1) / total_tests
-        yield test, result, progress
+        yield test, result, progress    #this function evaluates the quality of generated answers for all test questions by loading the tests and iterating through them. For each test, it calls the `evaluate_answer` function to get the evaluation results (specifically the `AnswerEval` object), and it calculates the progress as a percentage of tests completed. The function yields a tuple containing the test question, the answer evaluation result, and the progress, allowing for asynchronous processing or real-time updates in a user interface while the evaluations are being performed.
 
 
 def run_cli_evaluation(test_number: int):
@@ -226,7 +226,7 @@ def run_cli_evaluation(test_number: int):
     print(f"  Accuracy: {answer_result.accuracy:.2f}/5")
     print(f"  Completeness: {answer_result.completeness:.2f}/5")
     print(f"  Relevance: {answer_result.relevance:.2f}/5")
-    print(f"\n{'=' * 80}\n")
+    print(f"\n{'=' * 80}\n")    #this function is a command-line interface (CLI) helper that allows the user to run an evaluation for a specific test question by providing its row number as an argument. It loads the tests, checks if the provided test number is valid, and then retrieves the corresponding test question. The function prints the details of the test question, including the question itself, keywords, category, and reference answer. It then performs both retrieval and answer evaluations using the previously defined functions and prints the results in a structured format for easy reading. This allows users to quickly assess the performance of the RAG system on individual test questions directly from the command line.
 
 
 def main():
@@ -241,7 +241,7 @@ def main():
         print("Error: test_row_number must be an integer")
         sys.exit(1)
 
-    run_cli_evaluation(test_number)
+    run_cli_evaluation(test_number) #this function serves as the main entry point for the command-line interface (CLI) to evaluate a specific test question by its row number. It checks if the correct number of arguments is provided, attempts to parse the test row number as an integer, and handles any errors that may arise from invalid input. If the input is valid, it calls the `run_cli_evaluation` function with the specified test number to perform the evaluation and display the results. This allows users to easily run evaluations for individual test questions directly from the command line by specifying their row numbers.
 
 
 if __name__ == "__main__":

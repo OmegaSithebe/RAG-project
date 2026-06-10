@@ -708,6 +708,14 @@ implementation>
 - And the idea is that you could change this.
 - You could write your own ingestor to ingest the data and your own answer to accompany it, using consistent
 
+Real world example:
+- A customer support chatbot uses `answer.py` to answer a question like "How do I change my subscription plan?"
+- The chatbot passes the question and recent conversation history to `answer_question(question, history)`.
+- `fetch_context(question)` retrieves relevant support articles, pricing docs, and past tickets from the knowledge base.
+- `answer_question` combines the retrieved context and generates a final answer such as "To change your plan, go to your account settings, select a new tier, and confirm the update. If you need help, contact support."
+- This shows how the code connects a user question with stored documents and returns a practical answer.
+- When scoring answers, numeric accuracy values can be used: 1.0 indicates the most accurate answer, 1.1 the second most accurate, and so on, with higher numbers representing lower accuracy rank.
+
 ### Now the point is how we can put together.
 
 - Lets write **app.py**
@@ -719,9 +727,11 @@ Evaluation
 1. Curate a  Test set - Example questions set with the right context identified and reference answer provided.
 2. We will do two type of test. 
     - Measure Retrieval
-    - MRR (Mean Reciprocal Rank)
-    - nDCG (Normalized Discounted Cumulative Gain)
-    - Recall@k and Precision@k
+    - MRR (Mean Reciprocal Rank) = Average inverse rank of the first relevant result; ranges from 0 to 1, where 1 means the first result is always relevant.
+    - nDCG (Normalized Discounted Cumulative Gain) = A ranking metric that measures how well relevant documents are ordered; higher relevance at the top contributes more, and the score is normalized so a perfect ranking is 1.
+    - Recall@k = Proportion of relevant results that appear in the top k retrieved items. This means we measure how much of the relevant material is captured within the first k results.
+    - Precision@k = Proportion of the top k retrieved items that are relevant. Means how accurate the top-ranked results are, focusing on the quality of the first k items.
+    Here:
 3. Measure Answers
 - eg use LLM-as-a-judge to score provided answsers against criteria like accuracy, completeness and relevance
 - MRR = Average inverse rank of first hot; 1 if the first chunk always has relevant context
